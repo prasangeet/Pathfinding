@@ -10,16 +10,26 @@ The objective of this project is to develop an efficient train route optimizatio
 
 ### **3️⃣ Technology Stack**
 - **Backend:** Django (Python) + Django REST Framework
+  - **Django** is a high-level Python web framework that promotes rapid development and clean, pragmatic design.
+  - **Django REST Framework** simplifies the creation of robust and scalable REST APIs.
 - **Database:** PostgreSQL (with optional PostGIS for geospatial support)
+  - **PostgreSQL** is a powerful open-source relational database system known for its reliability and performance.
+  - **PostGIS** adds geospatial capabilities, allowing complex spatial queries and optimizations.
 - **Algorithm:** C++ (for Dijkstra's algorithm execution)
+  - **C++** offers high-performance computation, essential for running Dijkstra’s algorithm efficiently on large datasets.
 - **Frontend:** Next.js + MapLibre GL JS (for OpenStreetMap integration)
+  - **Next.js** is a React-based framework that supports server-side rendering and static site generation.
+  - **MapLibre GL JS** is an open-source JavaScript library for interactive, customizable vector maps.
 - **Map Data:** OpenStreetMap (free vector tiles)
+  - **OpenStreetMap** provides free, editable map data that can be used with vector tile renderers like MapLibre.
 
 ---
 
 ### **4️⃣ Project Workflow**
 
 #### **4.1 Backend Setup (Django + PostgreSQL)**
+- **Django:** Set up the backend server, define models, and create RESTful APIs.
+- **PostgreSQL:** Store station and route data, with optional PostGIS for spatial queries.
 - Initialize Django project and set up virtual environment.
 - Configure PostgreSQL database in Django settings.
 - Install Django REST Framework and set up CORS.
@@ -30,11 +40,13 @@ The objective of this project is to develop an efficient train route optimizatio
 - Run migrations and create API endpoints to manage stations/routes.
 
 #### **4.2 Algorithm Implementation (C++ for Dijkstra’s Algorithm)**
-- Implement Dijkstra’s algorithm in C++ for efficient route calculations.
+- **C++:** Implement Dijkstra’s algorithm for optimized pathfinding.
 - Expose C++ logic to Django using bindings (e.g., `pybind11`) or create a standalone service.
 - Integrate C++ with Django API to process route calculation requests.
 
 #### **4.3 Frontend Setup (Next.js + Map Integration)**
+- **Next.js:** Build dynamic pages and integrate with backend APIs.
+- **MapLibre GL JS:** Display OpenStreetMap tiles and render routes.
 - Initialize Next.js project.
 - Install and configure MapLibre GL JS to display OpenStreetMap tiles.
 - Build UI components:
@@ -44,10 +56,15 @@ The objective of this project is to develop an efficient train route optimizatio
 - Connect frontend to Django API to fetch stations/routes and display optimal paths.
 
 #### **4.4 Database (PostgreSQL)**
+- **PostgreSQL:** Design relational schema for stations and routes.
+- **PostGIS (optional):** Enable geospatial queries for advanced routing features.
 - Design schema for stations and routes.
 - Optionally integrate PostGIS for advanced geospatial data handling.
 
 #### **4.5 Final Integration & Deployment**
+- **Docker/Heroku:** Deploy backend and manage environments.
+- **Vercel/Netlify:** Host the Next.js frontend.
+- **AWS RDS (or similar):** Manage PostgreSQL database.
 - Integrate frontend, backend, and C++ logic.
 - Conduct unit and end-to-end testing.
 - Deploy:

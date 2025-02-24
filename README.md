@@ -1,10 +1,10 @@
-## 🚆 Train Routes Optimization Project Plan
+## 🗺️ Shortest Path Finding Project Plan
 
 ### **1️⃣ Problem Statement**
-Managing and optimizing train routes is a complex task that requires analyzing multiple routes to determine the most efficient path. Traditional route-finding methods may not account for dynamic conditions or offer the best performance for large datasets. The lack of an optimized system can lead to inefficient travel paths, longer travel times, and increased operational costs.
+Finding the most efficient path between two points on a map is a common requirement for navigation systems like Google Maps. Traditional routing algorithms can struggle with performance and accuracy on large datasets or complex networks, leading to inefficient routes and longer travel times.
 
 ### **2️⃣ Objective**
-The objective of this project is to develop an efficient train route optimization platform that uses **Dijkstra’s algorithm** to find the most valid and shortest routes between train stations. The system will leverage **C++** for fast algorithm execution, **Django** for backend management, **PostgreSQL** for data storage, and **Next.js** for an interactive frontend. The platform will visualize routes using **OpenStreetMap** vector tiles.
+The objective of this project is to develop an efficient shortest path finding platform that uses **Dijkstra’s algorithm** to compute the most valid and shortest routes between any two points on a map. The system will leverage **C++** for fast algorithm execution, **Django** for backend management, **PostgreSQL** for data storage, and **Next.js** for an interactive frontend. The platform will visualize routes using **OpenStreetMap** vector tiles.
 
 ---
 
@@ -29,36 +29,36 @@ The objective of this project is to develop an efficient train route optimizatio
 
 #### **4.1 Backend Setup (Django + PostgreSQL)**
 - **Django:** Set up the backend server, define models, and create RESTful APIs.
-- **PostgreSQL:** Store station and route data, with optional PostGIS for spatial queries.
+- **PostgreSQL:** Store map nodes and edges, with optional PostGIS for spatial queries.
 - Initialize Django project and set up virtual environment.
 - Configure PostgreSQL database in Django settings.
 - Install Django REST Framework and set up CORS.
-- Create Django app `routes` for stations and routes management.
+- Create Django app `maps` for managing nodes (points) and edges (paths).
 - Define models:
-  - **Station:** Name, Latitude, Longitude
-  - **Route:** Start Station, End Station, Distance
-- Run migrations and create API endpoints to manage stations/routes.
+  - **Node:** Name, Latitude, Longitude
+  - **Edge:** Start Node, End Node, Distance
+- Run migrations and create API endpoints to manage nodes/edges.
 
 #### **4.2 Algorithm Implementation (C++ for Dijkstra’s Algorithm)**
 - **C++:** Implement Dijkstra’s algorithm for optimized pathfinding.
 - Expose C++ logic to Django using bindings (e.g., `pybind11`) or create a standalone service.
-- Integrate C++ with Django API to process route calculation requests.
+- Integrate C++ with Django API to process shortest path calculation requests.
 
 #### **4.3 Frontend Setup (Next.js + Map Integration)**
 - **Next.js:** Build dynamic pages and integrate with backend APIs.
-- **MapLibre GL JS:** Display OpenStreetMap tiles and render routes.
+- **MapLibre GL JS:** Display OpenStreetMap tiles and render paths.
 - Initialize Next.js project.
 - Install and configure MapLibre GL JS to display OpenStreetMap tiles.
 - Build UI components:
-  - Map view to display stations and routes.
-  - Search/select interface for choosing start and end stations.
+  - Map view to display nodes and paths.
+  - Search/select interface for choosing start and end points.
   - Route visualization to display the optimal path.
-- Connect frontend to Django API to fetch stations/routes and display optimal paths.
+- Connect frontend to Django API to fetch nodes/edges and display optimal paths.
 
 #### **4.4 Database (PostgreSQL)**
-- **PostgreSQL:** Design relational schema for stations and routes.
+- **PostgreSQL:** Design relational schema for map nodes and paths.
 - **PostGIS (optional):** Enable geospatial queries for advanced routing features.
-- Design schema for stations and routes.
+- Design schema for nodes and edges.
 - Optionally integrate PostGIS for advanced geospatial data handling.
 
 #### **4.5 Final Integration & Deployment**
@@ -83,14 +83,14 @@ The objective of this project is to develop an efficient train route optimizatio
   ```
 
 #### **5.2 Basic Map Setup**
-- Create a reusable map component (`TrainMap.js`) to display OSM data:
+- Create a reusable map component (`PathMap.js`) to display OSM data:
   ```jsx
-  // components/TrainMap.js
+  // components/PathMap.js
   import { useEffect, useRef } from 'react';
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
 
-  const TrainMap = () => {
+  const PathMap = () => {
     const mapContainer = useRef(null);
 
     useEffect(() => {
@@ -115,19 +115,19 @@ The objective of this project is to develop an efficient train route optimizatio
     );
   };
 
-  export default TrainMap;
+  export default PathMap;
   ```
 
 #### **5.3 Integrate Map in Next.js Page**
-- Use the `TrainMap` component inside a Next.js page (e.g., `pages/index.js`):
+- Use the `PathMap` component inside a Next.js page (e.g., `pages/index.js`):
   ```jsx
-  import TrainMap from '../components/TrainMap';
+  import PathMap from '../components/PathMap';
 
   export default function Home() {
     return (
       <div>
-        <h1 className="text-2xl font-bold text-center my-4">Train Routes Map</h1>
-        <TrainMap />
+        <h1 className="text-2xl font-bold text-center my-4">Shortest Path Finder</h1>
+        <PathMap />
       </div>
     );
   }
@@ -139,25 +139,25 @@ The objective of this project is to develop an efficient train route optimizatio
   ```
 
 #### **5.4 Next Steps (Enhancements)**
-- **Add Markers:** Plot train stations on the map.
-- **Draw Routes:** Visualize train routes using `map.addSource` and `map.addLayer`.
+- **Add Markers:** Plot nodes (points) on the map.
+- **Draw Paths:** Visualize routes using `map.addSource` and `map.addLayer`.
 - **Interactivity:** Enable clickable markers and dynamic route highlighting.
 
 ---
 
 ### **6️⃣ Expected Outcomes**
-- A fully functional train route optimization platform.
-- Interactive map displaying stations and optimized routes.
-- Efficient route calculations using Dijkstra’s algorithm.
+- A fully functional shortest path finding platform.
+- Interactive map displaying nodes and optimized paths.
+- Efficient path calculations using Dijkstra’s algorithm.
 - Seamless integration between frontend, backend, and C++ logic.
 
 ### **7️⃣ Potential Enhancements**
-- Real-time route updates based on traffic or delays.
+- Real-time path updates based on traffic or closures.
 - User authentication and personalized route preferences.
 - Integration with geospatial data for more accurate mapping.
-- Mobile app version for on-the-go route planning.
+- Mobile app version for on-the-go navigation.
 
 ---
 
-This plan outlines the core structure and workflow for building a scalable and efficient train route optimization system using Dijkstra's algorithm and modern web technologies.
+This plan outlines the core structure and workflow for building a scalable and efficient shortest path finding system using Dijkstra's algorithm and modern web technologies.
 

@@ -1,5 +1,25 @@
 # Shortest Path Finding Project
 
+## Folder Structure
+```
+project_root/
+│── backend/            # Django Backend
+│   ├── manage.py       # Django project manager
+│   ├── backend/        # Django app
+│   ├── routes/         # Django routes app
+│   │   ├── models.py   # Database models
+│   │   ├── views.py    # API views
+│   ├── dijkstra/       # Compiled C++ module
+│── frontend/           # Next.js Frontend
+│   ├── components/     # React components
+│   ├── pages/          # Next.js pages
+│── algorithm/          # C++ Dijkstra Algorithm
+│   ├── dijkstra.cpp    # C++ implementation
+│   ├── setup.py        # Pybind11 setup
+│── docs/               # Documentation
+│── README.md           # Project documentation
+```
+
 ## Installation Process for Pybind and Python
 
 ### Step 1: Install Python and Required Dependencies
@@ -24,7 +44,7 @@ choco install mingw
 ```
 
 ### Step 3: Write and Compile the C++ Code
-Create a `dijkstra.cpp` file with the following content:
+Navigate to `algorithm/` and create a `dijkstra.cpp` file with the following content:
 ```cpp
 #include <iostream>
 #include <vector>
@@ -88,6 +108,7 @@ PYBIND11_MODULE(dijkstra, m) {
 ```
 
 ### Step 4: Create a `setup.py` to Compile the Module
+In the `algorithm/` folder, create `setup.py`:
 ```python
 from setuptools import setup, Extension
 import pybind11
@@ -112,6 +133,7 @@ setup(
 ### Step 5: Build the Module
 Run:
 ```bash
+cd algorithm/
 python setup.py build_ext --inplace
 ```
 
@@ -214,4 +236,3 @@ const PathMap = () => {
 
 export default PathMap;
 ```
-

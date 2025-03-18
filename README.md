@@ -4,12 +4,13 @@
 ```
 project_root/
 │── backend/            # Django Backend
-│   ├── manage.py       # Django project manager
-│   ├── backend/        # Django app
-│   ├── routes/         # Django routes app
-│   │   ├── models.py   # Database models
-│   │   ├── views.py    # API views
-│   ├── dijkstra/       # Compiled C++ module
+|   |── shortest_path
+|   │   ├── manage.py       # Django project manager
+|   │   ├── backend/        # Django app
+|   │   ├── routes/         # Django routes app
+|   │   │   ├── models.py   # Database models
+|   │   │   ├── views.py    # API views
+|   │   ├── dijkstra/       # Compiled C++ module
 │── frontend/           # Next.js Frontend
 │   ├── components/     # React components
 │   ├── pages/          # Next.js pages

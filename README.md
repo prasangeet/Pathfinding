@@ -1,163 +1,218 @@
+# Shortest Path Finding Project
+
+## Installation Process for Pybind and Python
+
+### Step 1: Install Python and Required Dependencies
+Ensure you have Python installed. You can download it from [python.org](https://www.python.org/). Then install `pybind11`:
+```bash
+pip install pybind11
+```
+
+### Step 2: Setup Pybind11 with C++
+If you haven’t installed a C++ compiler, install `mingw-w64` (for Windows) or use `g++` (Linux/macOS).
+```bash
+# On Linux/macOS
+sudo apt install g++
+
+# On Windows (via Chocolatey)
+choco install mingw
+```
+
+### Step 3: Write and Compile the C++ Code
+Create a `dijkstra.cpp` file with the following content:
+```cpp
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <unordered_map>
+#include <limits>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
+using namespace std;
+
+class Graph {
+public:
+    unordered_map<string, vector<pair<string, int>>> adjList;
+
+    void addEdge(const string& src, const string& dest, int weight) {
+        adjList[src].push_back({dest, weight});
+        adjList[dest].push_back({src, weight});
+    }
+
+    py::dict dijkstra(const string& src) {
+        unordered_map<string, int> distance;
+        priority_queue<pair<int, string>, vector<pair<int, string>>, greater<pair<int, string>>> pq;
+
+        for (auto& node : adjList) {
+            distance[node.first] = numeric_limits<int>::max();
+        }
+        distance[src] = 0;
+        pq.push({0, src});
+
+        while (!pq.empty()) {
+            string u = pq.top().second;
+            pq.pop();
+
+            for (auto& neighbor : adjList[u]) {
+                string v = neighbor.first;
+                int w = neighbor.second;
+
+                if (distance[v] > distance[u] + w) {
+                    distance[v] = distance[u] + w;
+                    pq.push({distance[v], v});
+                }
+            }
+        }
+
+        py::dict py_distance;
+        for (const auto& [key, value] : distance) {
+            py_distance[key.c_str()] = value;
+        }
+        return py_distance;
+    }
+};
+
+PYBIND11_MODULE(dijkstra, m) {
+    py::class_<Graph>(m, "Graph")
+        .def(py::init<>())
+        .def("addEdge", &Graph::addEdge)
+        .def("dijkstra", &Graph::dijkstra);
+}
+```
+
+### Step 4: Create a `setup.py` to Compile the Module
+```python
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
+import sys
+import pybind11
+
+ext_modules = [
+    Extension(
+        'dijkstra',
+        ['dijkstra.cpp'],
+        include_dirs=[pybind11.get_include()],
+        language='c++',
+    )
+]
+
+setup(
+    name='dijkstra',
+    version='0.0.1',
+    ext_modules=ext_modules,
+    zip_safe=False,
+)
+```
+
+### Step 5: Build the Module
+Run:
+```bash
+python setup.py build_ext --inplace
+```
+
+### Step 6: Test the Module
+```python
+import dijkstra
+
+graph = dijkstra.Graph()
+graph.addEdge("A", "B", 4)
+graph.addEdge("A", "C", 2)
+graph.addEdge("B", "C", 5)
+graph.addEdge("B", "D", 10)
+graph.addEdge("C", "D", 3)
+
+result = graph.dijkstra("A")
+print(result)
+```
+
+If everything is set up correctly, the shortest path results should print successfully.
+
+---
+
 ## 🗺️ Shortest Path Finding Project Plan
 
-### **1️⃣ Problem Statement**
-Finding the most efficient path between two points on a map is a common requirement for navigation systems like Google Maps. Traditional routing algorithms can struggle with performance and accuracy on large datasets or complex networks, leading to inefficient routes and longer travel times.
+### 1️⃣ Problem Statement
+Finding the most efficient path between two points on a map is crucial for navigation systems. Large datasets require optimized algorithms to compute routes efficiently.
 
-### **2️⃣ Objective**
-The objective of this project is to develop an efficient shortest path finding platform that uses **Dijkstra’s algorithm** to compute the most valid and shortest routes between any two points on a map. The system will leverage **C++** for fast algorithm execution, **Django** for backend management, **PostgreSQL** for data storage, and **Next.js** for an interactive frontend. The platform will visualize routes using **OpenStreetMap** vector tiles.
+### 2️⃣ Objective
+Develop a platform using **Dijkstra’s algorithm** to compute the most valid and shortest routes. The system will use **C++** for computation, **Django** for backend, **PostgreSQL** for data storage, and **Next.js** for frontend. **OpenStreetMap** vector tiles will be used for visualization.
 
 ---
 
-### **3️⃣ Technology Stack**
-- **Backend:** Django (Python) + Django REST Framework
-  - **Django** is a high-level Python web framework that promotes rapid development and clean, pragmatic design.
-  - **Django REST Framework** simplifies the creation of robust and scalable REST APIs.
-- **Database:** PostgreSQL (with optional PostGIS for geospatial support)
-  - **PostgreSQL** is a powerful open-source relational database system known for its reliability and performance.
-  - **PostGIS** adds geospatial capabilities, allowing complex spatial queries and optimizations.
-- **Algorithm:** C++ (for Dijkstra's algorithm execution)
-  - **C++** offers high-performance computation, essential for running Dijkstra’s algorithm efficiently on large datasets.
-- **Frontend:** Next.js + MapLibre GL JS (for OpenStreetMap integration)
-  - **Next.js** is a React-based framework that supports server-side rendering and static site generation.
-  - **MapLibre GL JS** is an open-source JavaScript library for interactive, customizable vector maps.
+### 3️⃣ Technology Stack
+- **Backend:** Django + Django REST Framework
+- **Database:** PostgreSQL (+ PostGIS for geospatial queries)
+- **Algorithm:** C++ (Dijkstra’s algorithm)
+- **Frontend:** Next.js + MapLibre GL JS
 - **Map Data:** OpenStreetMap (free vector tiles)
-  - **OpenStreetMap** provides free, editable map data that can be used with vector tile renderers like MapLibre.
 
 ---
 
-### **4️⃣ Project Workflow**
+### 4️⃣ Project Workflow
 
-#### **4.1 Backend Setup (Django + PostgreSQL)**
-- **Django:** Set up the backend server, define models, and create RESTful APIs.
-- **PostgreSQL:** Store map nodes and edges, with optional PostGIS for spatial queries.
-- Initialize Django project and set up virtual environment.
-- Configure PostgreSQL database in Django settings.
-- Install Django REST Framework and set up CORS.
-- Create Django app `maps` for managing nodes (points) and edges (paths).
-- Define models:
-  - **Node:** Name, Latitude, Longitude
-  - **Edge:** Start Node, End Node, Distance
-- Run migrations and create API endpoints to manage nodes/edges.
+#### 4.1 Backend Setup
+- Setup Django with PostgreSQL
+- Define models for nodes (points) and edges (paths)
+- Create Django API endpoints for managing routes
 
-#### **4.2 Algorithm Implementation (C++ for Dijkstra’s Algorithm)**
-- **C++:** Implement Dijkstra’s algorithm for optimized pathfinding.
-- Expose C++ logic to Django using bindings (e.g., `pybind11`) or create a standalone service.
-- Integrate C++ with Django API to process shortest path calculation requests.
+#### 4.2 Algorithm Implementation
+- Implement Dijkstra’s algorithm in C++
+- Expose C++ logic using `pybind11`
+- Integrate with Django backend
 
-#### **4.3 Frontend Setup (Next.js + Map Integration)**
-- **Next.js:** Build dynamic pages and integrate with backend APIs.
-- **MapLibre GL JS:** Display OpenStreetMap tiles and render paths.
-- Initialize Next.js project.
-- Install and configure MapLibre GL JS to display OpenStreetMap tiles.
-- Build UI components:
-  - Map view to display nodes and paths.
-  - Search/select interface for choosing start and end points.
-  - Route visualization to display the optimal path.
-- Connect frontend to Django API to fetch nodes/edges and display optimal paths.
+#### 4.3 Frontend Setup
+- Use Next.js for UI
+- Display maps with MapLibre GL JS
+- Create components for selecting start and end points
 
-#### **4.4 Database (PostgreSQL)**
-- **PostgreSQL:** Design relational schema for map nodes and paths.
-- **PostGIS (optional):** Enable geospatial queries for advanced routing features.
-- Design schema for nodes and edges.
-- Optionally integrate PostGIS for advanced geospatial data handling.
+#### 4.4 Database
+- Use PostgreSQL for storing nodes and edges
+- Optionally integrate PostGIS for geospatial queries
 
-#### **4.5 Final Integration & Deployment**
-- **Docker/Heroku:** Deploy backend and manage environments.
-- **Vercel/Netlify:** Host the Next.js frontend.
-- **AWS RDS (or similar):** Manage PostgreSQL database.
-- Integrate frontend, backend, and C++ logic.
-- Conduct unit and end-to-end testing.
-- Deploy:
-  - Backend on Docker/Heroku
-  - Frontend on Vercel/Netlify
-  - Database on AWS RDS or similar
+#### 4.5 Deployment
+- **Backend:** Docker/Heroku
+- **Frontend:** Vercel/Netlify
+- **Database:** AWS RDS (or similar)
 
 ---
 
-### **5️⃣ Setting Up OpenStreetMap (OSM) in Next.js**
+### 5️⃣ Setting Up OpenStreetMap (OSM) in Next.js
 
-#### **5.1 Install Dependencies**
-- Install MapLibre GL JS to render OSM vector tiles:
-  ```bash
-  npm install maplibre-gl
-  ```
+#### 5.1 Install Dependencies
+```bash
+npm install maplibre-gl
+```
 
-#### **5.2 Basic Map Setup**
-- Create a reusable map component (`PathMap.js`) to display OSM data:
-  ```jsx
-  // components/PathMap.js
-  import { useEffect, useRef } from 'react';
-  import maplibregl from 'maplibre-gl';
-  import 'maplibre-gl/dist/maplibre-gl.css';
+#### 5.2 Basic Map Setup
+Create a reusable map component (`PathMap.js`):
+```jsx
+import { useEffect, useRef } from 'react';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
-  const PathMap = () => {
-    const mapContainer = useRef(null);
+const PathMap = () => {
+  const mapContainer = useRef(null);
 
-    useEffect(() => {
-      const map = new maplibregl.Map({
-        container: mapContainer.current,
-        style: 'https://demotiles.maplibre.org/style.json', // Free OSM tiles
-        center: [0, 0], // Default center [longitude, latitude]
-        zoom: 2, // Default zoom level
-      });
+  useEffect(() => {
+    const map = new maplibregl.Map({
+      container: mapContainer.current,
+      style: 'https://demotiles.maplibre.org/style.json',
+      center: [0, 0],
+      zoom: 2,
+    });
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    return () => map.remove();
+  }, []);
 
-      // Add navigation controls (zoom in/out, rotation)
-      map.addControl(new maplibregl.NavigationControl(), 'top-right');
+  return <div ref={mapContainer} style={{ width: '100%', height: '600px' }} />;
+};
 
-      return () => map.remove(); // Cleanup on unmount
-    }, []);
-
-    return (
-      <div
-        ref={mapContainer}
-        style={{ width: '100%', height: '600px' }}
-      />
-    );
-  };
-
-  export default PathMap;
-  ```
-
-#### **5.3 Integrate Map in Next.js Page**
-- Use the `PathMap` component inside a Next.js page (e.g., `pages/index.js`):
-  ```jsx
-  import PathMap from '../components/PathMap';
-
-  export default function Home() {
-    return (
-      <div>
-        <h1 className="text-2xl font-bold text-center my-4">Shortest Path Finder</h1>
-        <PathMap />
-      </div>
-    );
-  }
-  ```
-
-- Run the Next.js app:
-  ```bash
-  npm run dev
-  ```
-
-#### **5.4 Next Steps (Enhancements)**
-- **Add Markers:** Plot nodes (points) on the map.
-- **Draw Paths:** Visualize routes using `map.addSource` and `map.addLayer`.
-- **Interactivity:** Enable clickable markers and dynamic route highlighting.
+export default PathMap;
+```
 
 ---
 
-### **6️⃣ Expected Outcomes**
-- A fully functional shortest path finding platform.
-- Interactive map displaying nodes and optimized paths.
-- Efficient path calculations using Dijkstra’s algorithm.
-- Seamless integration between frontend, backend, and C++ logic.
-
-### **7️⃣ Potential Enhancements**
-- Real-time path updates based on traffic or closures.
-- User authentication and personalized route preferences.
-- Integration with geospatial data for more accurate mapping.
-- Mobile app version for on-the-go navigation.
-
----
-
-This plan outlines the core structure and workflow for building a scalable and efficient shortest path finding system using Dijkstra's algorithm and modern web technologies.
+This README now includes the **installation process for Pybind and Python**, along with the project plan!
 

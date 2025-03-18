@@ -8,6 +8,11 @@ Ensure you have Python installed. You can download it from [python.org](https://
 pip install pybind11
 ```
 
+Alternatively, if using MinGW or MSVC, install Python and dependencies using:
+```bash
+pacman -S pybind11 python python-devel python-pip
+```
+
 ### Step 2: Setup Pybind11 with C++
 If you haven’t installed a C++ compiler, install `mingw-w64` (for Windows) or use `g++` (Linux/macOS).
 ```bash
@@ -85,8 +90,6 @@ PYBIND11_MODULE(dijkstra, m) {
 ### Step 4: Create a `setup.py` to Compile the Module
 ```python
 from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
-import sys
 import pybind11
 
 ext_modules = [
@@ -211,8 +214,4 @@ const PathMap = () => {
 
 export default PathMap;
 ```
-
----
-
-This README now includes the **installation process for Pybind and Python**, along with the project plan!
 

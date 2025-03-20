@@ -1,12 +1,16 @@
 from django.db import models
 
-# Create your models here.
 class Node(models.Model):
-    name = models.CharField(max_length=100)
     latitude = models.FloatField()
     longitude = models.FloatField()
+
+    def __str__(self):
+        return f"({self.latitude}, {self.longitude})"
 
 class Edge(models.Model):
     start_node = models.ForeignKey(Node, on_delete=models.CASCADE, related_name="start_edges")
     end_node = models.ForeignKey(Node, on_delete=models.CASCADE, related_name="end_edges")
-    distance = models.FloatField()
+    weight = models.FloatField()
+
+    def __str__(self):
+        return f"({self.start_node.latitude}, {self.start_node.longitude}) -> ({self.end_node.latitude}, {self.end_node.longitude}) ({self.weight})"

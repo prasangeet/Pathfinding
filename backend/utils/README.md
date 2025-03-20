@@ -1,0 +1,1 @@
+docker run --rm -it -v ${PWD}:/data -p 8080:8080 maptiler/tileserver-gl --file /data/jodhpur.mbtiles 

@@ -1,6 +1,17 @@
-import dijkstra
+import sys
+import os
 
-# Create a graph object
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+print(BASE_DIR)
+ALGORITHM_DIR = os.path.abspath(os.path.join(BASE_DIR, 'algorithms', 'build', 'Release'))
+
+sys.path.append(ALGORITHM_DIR)
+print(sys.path)
+
+
+import dijkstra 
+
+
 g = dijkstra.Graph()
 
 # Add edges

@@ -1,13 +1,11 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import axios from "axios";
-import { MapPin, LocateFixed, Route, Car } from "lucide-react";
+import { MapPin, LocateFixed, Route, Car, Bike, PersonStanding, LocateIcon } from "lucide-react";
 import clsx from "clsx";
 
-const JodhpurMap = () => {
+const PuneMap = () => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const routeLayerId = "route-layer";
@@ -24,15 +22,37 @@ const JodhpurMap = () => {
   const [closestCar, setClosestCar] = useState(null);
   const [carMarkers, setCarMarkers] = useState([]);
   const [carRouteDistance, setCarRouteDistance] = useState(null);
+  const [routeDistance, setRouteDistance] = useState(null);
+
+  // Travel speeds in meters per second
+  const travelSpeeds = {
+    car: (30 * 1000) / 3600, // 30 km/h in m/s
+    bike: (15 * 1000) / 3600, // 15 km/h in m/s
+    walk: (5 * 1000) / 3600, // 5 km/h in m/s
+  };
+
+  // Calculate travel time in minutes
+  const calculateTravelTime = (distance, speed) => {
+    if (!distance) return null;
+    return Math.round((distance / speed) / 60); // Convert seconds to minutes
+  };
+
+  // Format distance for display
+  const formatDistance = (meters) => {
+    if (!meters) return "N/A";
+    return meters >= 1000
+      ? `${(meters / 1000).toFixed(1)} km`
+      : `${Math.round(meters)} m`;
+  };
 
   // Initialize map
   useEffect(() => {
     if (map.current || !mapContainer.current) return;
 
-    // Define the bounds for central Jodhpur
+    // Define the bounds for central Pune
     const bounds = [
-      [73.0161, 26.288], // Southwest coordinates
-      [73.031, 26.2988], // Northeast coordinates
+      [73.555, 18.415], // Southwest coordinates
+      [74.2, 18.786], // Northeast coordinates
     ];
 
     map.current = new maplibregl.Map({
@@ -40,7 +60,7 @@ const JodhpurMap = () => {
       style: {
         version: 8,
         sources: {
-          "jodhpur-source": {
+          "pune-source": {
             type: "raster",
             tiles: [
               "http://localhost:8080/styles/basic-preview/{z}/{x}/{y}.png",
@@ -50,26 +70,22 @@ const JodhpurMap = () => {
         },
         layers: [
           {
-            id: "jodhpur-layer",
+            id: "pune-layer",
             type: "raster",
-            source: "jodhpur-source",
+            source: "pune-source",
           },
         ],
       },
-      center: [73.024807, 26.2933995],
-      zoom: 17,
-      // minZoom: 16.5,
-      // maxZoom: 19,
+      center: [73.8560, 18.5115],
+      zoom: 15,
       maxBounds: bounds,
       fitBoundsOptions: {
         padding: 50,
       },
     });
 
-    // Add navigation control
     map.current.addControl(new maplibregl.NavigationControl(), "top-right");
 
-    // Restrict panning to bounds
     map.current.on("moveend", () => {
       const center = map.current.getCenter();
       if (!isWithinBounds(center, bounds)) {
@@ -86,9 +102,7 @@ const JodhpurMap = () => {
           map.current.addImage("car-icon", image);
         }
       });
-
       setMapLoaded(true);
-      generateRandomCars(bounds);
     });
 
     return () => {
@@ -96,30 +110,6 @@ const JodhpurMap = () => {
       map.current = null;
     };
   }, []);
-
-  // Generate random cars within map bounds
-  const generateRandomCars = (bounds) => {
-    const randomCars = [];
-    const numCars = 25; // Increased number of cars for better visibility
-
-    for (let i = 0; i < numCars; i++) {
-      // Generate random coordinates within bounds
-      const lng = bounds[0][0] + Math.random() * (bounds[1][0] - bounds[0][0]);
-      const lat = bounds[0][1] + Math.random() * (bounds[1][1] - bounds[0][1]);
-
-      randomCars.push({
-        id: `car-${i}`,
-        lng,
-        lat,
-        type: "UberX",
-        image: "/car-economy.png", // Only using economy cars
-        // Random rotation angle (0-360 degrees)
-        rotation: Math.floor(Math.random() * 360),
-      });
-    }
-
-    setCars(randomCars);
-  };
 
   // Helper functions for bounds checking
   const isWithinBounds = (point, bounds) => {
@@ -152,9 +142,7 @@ const JodhpurMap = () => {
           .addTo(map.current);
         setSource({ lng, lat });
         setSourceMarker(newMarker);
-
-        // Find closest car when source is set
-        findClosestCar({ lng, lat });
+        setRouteDistance(null);
       } else {
         if (destinationMarker) destinationMarker.remove();
         const newMarker = new maplibregl.Marker({ color: "#10B981" })
@@ -162,6 +150,7 @@ const JodhpurMap = () => {
           .addTo(map.current);
         setDestination({ lng, lat });
         setDestinationMarker(newMarker);
+        setRouteDistance(null);
       }
     };
 
@@ -170,110 +159,7 @@ const JodhpurMap = () => {
     return () => {
       map.current?.off("click", handleMapClick);
     };
-  }, [mapLoaded, selectionMode, sourceMarker, destinationMarker, cars]);
-
-  // Add car markers to map
-  useEffect(() => {
-    if (!map.current || !mapLoaded || cars.length === 0) return;
-
-    // Remove existing car markers
-    carMarkers.forEach((marker) => marker.remove());
-
-    const newCarMarkers = cars.map((car) => {
-      // Create a custom element for the car marker
-      const el = document.createElement("div");
-      el.className = "car-marker";
-      el.style.width = "32px";
-      el.style.height = "32px";
-      el.style.backgroundImage = `url(${car.image})`;
-      el.style.backgroundSize = "contain";
-      el.style.backgroundRepeat = "no-repeat";
-      el.style.transform = `rotate(${car.rotation}deg)`;
-
-      // Create and add the marker
-      const marker = new maplibregl.Marker({
-        element: el,
-        rotation: car.rotation,
-      })
-        .setLngLat([car.lng, car.lat])
-        .addTo(map.current);
-
-      return marker;
-    });
-
-    setCarMarkers(newCarMarkers);
-  }, [cars, mapLoaded]);
-
-  // Draw route to closest car when found
-  useEffect(() => {
-    if (!closestCar || !map.current || !source) return;
-
-    // Remove existing car route if any
-    if (map.current.getLayer(carRouteLayerId)) {
-      map.current.removeLayer(carRouteLayerId);
-      map.current.removeSource(carRouteLayerId);
-    }
-
-    // Add route from source to closest car
-    map.current.addSource(carRouteLayerId, {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        geometry: {
-          type: "LineString",
-          coordinates: [
-            [source.lng, source.lat],
-            [closestCar.lng, closestCar.lat],
-          ],
-        },
-      },
-    });
-
-    map.current.addLayer({
-      id: carRouteLayerId,
-      type: "line",
-      source: carRouteLayerId,
-      paint: {
-        "line-color": "#8B5CF6", // Purple color for car route
-        "line-width": 4,
-        "line-opacity": 0.9,
-        "line-dasharray": [2, 1], // Dashed line
-      },
-    });
-
-    // Calculate and store the distance to the car
-    const distance = calculateDistance(
-      source.lat,
-      source.lng,
-      closestCar.lat,
-      closestCar.lng
-    );
-    setCarRouteDistance(distance);
-  }, [closestCar, source]);
-
-  // Find the closest car to a given point
-  const findClosestCar = (point) => {
-    if (!cars.length) return;
-
-    let closest = null;
-    let minDistance = Number.POSITIVE_INFINITY;
-
-    cars.forEach((car) => {
-      const distance = calculateDistance(
-        point.lat,
-        point.lng,
-        car.lat,
-        car.lng
-      );
-
-      if (distance < minDistance) {
-        minDistance = distance;
-        closest = car;
-      }
-    });
-
-    setClosestCar(closest);
-  };
+  }, [mapLoaded, selectionMode, sourceMarker, destinationMarker]);
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -317,6 +203,15 @@ const JodhpurMap = () => {
           map.current.removeSource(routeLayerId);
         }
 
+        // Calculate total distance
+        const distance = calculateDistance(
+          source.lat,
+          source.lng,
+          destination.lat,
+          destination.lng
+        );
+        setRouteDistance(distance);
+
         // Add empty GeoJSON source for animation
         map.current.addSource(routeLayerId, {
           type: "geojson",
@@ -351,6 +246,14 @@ const JodhpurMap = () => {
         map.current.removeLayer(routeLayerId);
         map.current.removeSource(routeLayerId);
       }
+
+      const distance = calculateDistance(
+        source.lat,
+        source.lng,
+        destination.lat,
+        destination.lng
+      );
+      setRouteDistance(distance);
 
       map.current.addSource(routeLayerId, {
         type: "geojson",
@@ -407,7 +310,6 @@ const JodhpurMap = () => {
     if (sourceMarker) sourceMarker.remove();
     if (destinationMarker) destinationMarker.remove();
 
-    // Remove route layers
     if (map.current?.getLayer(routeLayerId)) {
       map.current.removeLayer(routeLayerId);
       map.current.removeSource(routeLayerId);
@@ -424,25 +326,19 @@ const JodhpurMap = () => {
     setDestinationMarker(null);
     setClosestCar(null);
     setCarRouteDistance(null);
-
-    // Regenerate random cars
-    const bounds = [
-      [73.000807, 26.2633995],
-      [73.048807, 26.3233995],
-    ];
-    generateRandomCars(bounds);
+    setRouteDistance(null);
   };
 
   return (
     <div className="relative w-full h-screen">
       <div ref={mapContainer} className="w-full h-full bg-gray-200" />
 
-      <div className="absolute top-5 left-5 p-6 bg-white/95 backdrop-blur-sm shadow-xl rounded-xl z-10 w-80">
+      <div className="absolute top-5 left-5 p-6 bg-white/95 backdrop-blur-sm shadow-xl rounded-xl z-10 w-96">
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Car className="w-6 h-6 text-blue-600" />
+            <LocateIcon className="w-6 h-6 text-blue-600" />
             <h2 className="text-xl font-bold text-gray-800">
-              Uber-like Ride Finder
+              Pathfinding Visualizer
             </h2>
           </div>
 
@@ -462,7 +358,7 @@ const JodhpurMap = () => {
                 )}
               >
                 <MapPin className="w-4 h-4" />
-                <span>Pickup</span>
+                <span>Source</span>
               </button>
 
               <button
@@ -475,7 +371,7 @@ const JodhpurMap = () => {
                 )}
               >
                 <LocateFixed className="w-4 h-4" />
-                <span>Dropoff</span>
+                <span>Destination</span>
               </button>
             </div>
           </div>
@@ -484,7 +380,7 @@ const JodhpurMap = () => {
             <div className="flex items-center space-x-2 text-sm">
               <div className="w-3 h-3 rounded-full bg-blue-500" />
               <span className="text-gray-600">
-                Pickup:{" "}
+                Source:{" "}
                 {source
                   ? `${source.lat.toFixed(4)}, ${source.lng.toFixed(4)}`
                   : "Not set"}
@@ -494,7 +390,7 @@ const JodhpurMap = () => {
             <div className="flex items-center space-x-2 text-sm">
               <div className="w-3 h-3 rounded-full bg-green-500" />
               <span className="text-gray-600">
-                Dropoff:{" "}
+                Destination:{" "}
                 {destination
                   ? `${destination.lat.toFixed(4)}, ${destination.lng.toFixed(
                       4
@@ -503,15 +399,47 @@ const JodhpurMap = () => {
               </span>
             </div>
 
-            {closestCar && (
-              <div className="flex items-center space-x-2 text-sm">
-                <div className="w-3 h-3 rounded-full bg-purple-500" />
-                <span className="text-gray-600">
-                  Closest car:{" "}
-                  {carRouteDistance
-                    ? `${carRouteDistance.toFixed(0)}m away`
-                    : "calculating..."}
-                </span>
+            {routeDistance && (
+              <div className="mt-4 space-y-3 border-t pt-3">
+                <h3 className="font-medium text-gray-700">Route Information</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Total Distance:</span>
+                    <span className="font-medium">{formatDistance(routeDistance)}</span>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Car className="w-4 h-4 text-blue-600" />
+                        <span className="text-gray-600">By Car</span>
+                      </div>
+                      <span className="font-medium">
+                        {calculateTravelTime(routeDistance, travelSpeeds.car)} mins
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Bike className="w-4 h-4 text-green-600" />
+                        <span className="text-gray-600">By Bike</span>
+                      </div>
+                      <span className="font-medium">
+                        {calculateTravelTime(routeDistance, travelSpeeds.bike)} mins
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-2">
+                        <PersonStanding className="w-4 h-4 text-orange-600" />
+                        <span className="text-gray-600">Walking</span>
+                      </div>
+                      <span className="font-medium">
+                        {calculateTravelTime(routeDistance, travelSpeeds.walk)} mins
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -546,4 +474,4 @@ const JodhpurMap = () => {
   );
 };
 
-export default JodhpurMap;
+export default PuneMap;
